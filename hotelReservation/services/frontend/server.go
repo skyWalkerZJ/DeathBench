@@ -199,28 +199,28 @@ func (s *Server) getGprcConn(name string) (*grpc.ClientConn, error) {
 
 	if name == "srv-reservation" {
 		return dialer.Dial(
-			"127.0.0.1:8087",
+			"192.168.1.5:8087",
 			dialer.WithTracer(s.Tracer),
 		)
 	} else if name == "srv-profile" {
 		return dialer.Dial(
-			"127.0.0.1:8081",
+			"192.168.1.4:8081",
 			dialer.WithTracer(s.Tracer),
 		)
 	} else if name == "srv-search" {
 		return dialer.Dial(
-			"127.0.0.1:8082",
+			"192.168.1.3:8082",
 			dialer.WithTracer(s.Tracer),
 		)
 	} else if name == "srv-user" {
 		return dialer.Dial(
-			"127.0.0.1:8086",
+			"192.168.1.6:8086",
 			dialer.WithTracer(s.Tracer),
 		)
 	}
 
 	return dialer.Dial(
-		"127.0.0.1:8087",
+		"192.168.1.5:8087",
 		// fmt.Sprintf("consul://%s/%s", s.ConsulAddr, name),
 		dialer.WithTracer(s.Tracer),
 		// dialer.WithBalancer(s.Registry.Client),

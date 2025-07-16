@@ -1,0 +1,28 @@
+{
+  "consulAddress": "127.0.0.1:8500",
+  "jaegerAddress": "127.0.0.1:6831",
+  "FrontendPort": "5000",
+  "GeoPort": "8083",
+  "GeoMongoAddress": "127.0.0.1:27017",
+  "ProfilePort": "8081",
+  "ProfileMongoAddress": "127.0.0.1:27017",
+  "ProfileMemcAddress": "127.0.0.1:11211",
+  "ReviewPort": "8088",
+  "ReviewMongoAddress": "127.0.0.1:27017",
+  "ReviewMemcAddress": "127.0.0.1:11211",
+  "AttractionsPort": "8089",
+  "AttractionsMongoAddress": "127.0.0.1:27017",
+  "RatePort": "8084",
+  "RateMongoAddress": "127.0.0.1:27017",
+  "RateMemcAddress": "127.0.0.1:11211",
+  "RecommendPort": "8085",
+  "RecommendMongoAddress": "127.0.0.1:27017",
+  "ReservePort": "8087",
+  "ReserveMongoAddress": "127.0.0.1:27017",
+  "ReserveMemcAddress": "127.0.0.1:11211",
+  "SearchPort": "8082",
+  "UserPort": "8086",
+  "UserMongoAddress": "127.0.0.1:27017",
+  "KnativeDomainName": ""
+}
+
