@@ -12,6 +12,7 @@ import (
 	pb "github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/services/search/proto"
 	"github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/tls"
 	"github.com/google/uuid"
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	_ "github.com/mbobakov/grpc-consul-resolver"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/rs/zerolog/log"

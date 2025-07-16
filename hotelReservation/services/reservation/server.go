@@ -14,6 +14,7 @@ import (
 	pb "github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/services/reservation/proto"
 	"github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/tls"
 	"github.com/google/uuid"
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/opentracing/opentracing-go"
 	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/bson"
