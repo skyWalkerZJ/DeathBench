@@ -18,6 +18,7 @@ import (
 	search "github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/services/search/proto"
 	user "github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/services/user/proto"
 	"github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/tls"
+	"github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/tracing"
 	_ "github.com/mbobakov/grpc-consul-resolver"
 	"github.com/opentracing/opentracing-go"
 	"github.com/rs/zerolog/log"
@@ -92,8 +93,8 @@ func (s *Server) Run() error {
 	log.Info().Msg("Successful")
 
 	log.Info().Msg("frontend before mux")
-	// mux := tracing.NewServeMux(s.Tracer)
-	mux := http.NewServeMux()
+	mux := tracing.NewServeMux(s.Tracer)
+	// mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.FS(staticContent)))
 	mux.Handle("/hotels", http.HandlerFunc(s.searchHandler))
 	// mux.Handle("/recommendations", http.HandlerFunc(s.recommendHandler))
