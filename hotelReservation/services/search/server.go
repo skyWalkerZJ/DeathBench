@@ -16,7 +16,7 @@ import (
 	"github.com/google/uuid"
 	_ "github.com/mbobakov/grpc-consul-resolver"
 
-	// "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
