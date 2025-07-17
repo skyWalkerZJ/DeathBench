@@ -8,13 +8,13 @@ import (
 	"sync"
 	"time"
 
+	"hotelReservation/dagor"
 	"hotelReservation/registry"
 	pb "hotelReservation/services/profile/proto"
 	"hotelReservation/tls"
 
 	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/google/uuid"
-	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/opentracing/opentracing-go"
 	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/bson"
@@ -51,6 +51,22 @@ func (s *Server) Run() error {
 
 	log.Trace().Msgf("in run s.IpAddr = %s, port = %d", s.IpAddr, s.Port)
 
+	param := dagor.DagorParam{
+		NodeName:                     "frontend",
+		BusinessMap:                  map[string]int{"hotel": 1},
+		QueuingThresh:                5 * time.Millisecond,
+		EntryService:                 true,
+		IsEnduser:                    false,
+		AdmissionLevelUpdateInterval: 1 * time.Second,
+		Alpha:                        0.7,
+		Beta:                         0.3,
+		Umax:                         1000,
+		Bmax:                         500,
+		Debug:                        true,
+		UseSyncMap:                   false,
+	}
+
+	d := dagor.NewDagorNode(param)
 	opts := []grpc.ServerOption{
 		grpc.KeepaliveParams(keepalive.ServerParameters{
 			Timeout: 120 * time.Second,
@@ -58,9 +74,7 @@ func (s *Server) Run() error {
 		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
 			PermitWithoutStream: true,
 		}),
-		grpc.UnaryInterceptor(
-			otgrpc.OpenTracingServerInterceptor(s.Tracer),
-		),
+		grpc.UnaryInterceptor(d.UnaryInterceptorServer),
 	}
 
 	if tlsopt := tls.GetServerOpt(); tlsopt != nil {
@@ -75,12 +89,6 @@ func (s *Server) Run() error {
 	if err != nil {
 		log.Fatal().Msgf("failed to configure listener: %v", err)
 	}
-
-	// err = s.Registry.Register(name, s.uuid, s.IpAddr, s.Port)
-	// if err != nil {
-	// 	return fmt.Errorf("failed register: %v", err)
-	// }
-	// log.Info().Msg("Successfully registered in consul")
 
 	return srv.Serve(lis)
 }

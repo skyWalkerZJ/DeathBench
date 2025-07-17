@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	"hotelReservation/dialer"
+	"hotelReservation/dagor"
 	"hotelReservation/registry"
 	geo "hotelReservation/services/geo/proto"
 	rate "hotelReservation/services/rate/proto"
@@ -19,6 +19,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 )
 
@@ -47,6 +48,22 @@ func (s *Server) Run() error {
 	}
 
 	s.uuid = uuid.New().String()
+	param := dagor.DagorParam{
+		NodeName:                     "frontend",
+		BusinessMap:                  map[string]int{"hotel": 1},
+		QueuingThresh:                5 * time.Millisecond,
+		EntryService:                 true,
+		IsEnduser:                    false,
+		AdmissionLevelUpdateInterval: 1 * time.Second,
+		Alpha:                        0.7,
+		Beta:                         0.3,
+		Umax:                         1000,
+		Bmax:                         500,
+		Debug:                        true,
+		UseSyncMap:                   false,
+	}
+
+	d := dagor.NewDagorNode(param)
 
 	opts := []grpc.ServerOption{
 		grpc.KeepaliveParams(keepalive.ServerParameters{
@@ -55,9 +72,7 @@ func (s *Server) Run() error {
 		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
 			PermitWithoutStream: true,
 		}),
-		// grpc.UnaryInterceptor(
-		// 	otgrpc.OpenTracingServerInterceptor(s.Tracer),
-		// ),
+		grpc.UnaryInterceptor(d.UnaryInterceptorServer),
 	}
 
 	if tlsopt := tls.GetServerOpt(); tlsopt != nil {
@@ -113,33 +128,41 @@ func (s *Server) initRateClient(name string) error {
 }
 
 func (s *Server) getGprcConn(name string) (*grpc.ClientConn, error) {
-
-	if name == "srv-reservation" {
-		return dialer.Dial("192.168.1.5:8087", dialer.WithTracer(s.Tracer))
-	} else if name == "srv-profile" {
-		return dialer.Dial("192.168.1.4:8081", dialer.WithTracer(s.Tracer))
-	} else if name == "srv-search" {
-		return dialer.Dial("192.168.1.3:8082", dialer.WithTracer(s.Tracer))
-	} else if name == "srv-user" {
-		return dialer.Dial("192.168.1.6:8086", dialer.WithTracer(s.Tracer))
-	} else if name == "srv-geo" {
-		return dialer.Dial("192.168.1.7:8083", dialer.WithTracer(s.Tracer))
-	} else if name == "srv-rate" {
-		return dialer.Dial("192.168.1.8:8084", dialer.WithTracer(s.Tracer))
+	param := dagor.DagorParam{
+		NodeName:                     "frontend",
+		BusinessMap:                  map[string]int{"hotel": 1},
+		QueuingThresh:                5 * time.Millisecond,
+		EntryService:                 true,
+		IsEnduser:                    false,
+		AdmissionLevelUpdateInterval: 1 * time.Second,
+		Alpha:                        0.7,
+		Beta:                         0.3,
+		Umax:                         1000,
+		Bmax:                         500,
+		Debug:                        true,
+		UseSyncMap:                   false,
 	}
 
-	return dialer.Dial("192.168.1.8:8084", dialer.WithTracer(s.Tracer))
-	// if s.KnativeDns != "" {
-	// 	return dialer.Dial(
-	// 		fmt.Sprintf("consul://%s/%s.%s", s.ConsulAddr, name, s.KnativeDns),
-	// 		dialer.WithTracer(s.Tracer))
-	// } else {
-	// 	return dialer.Dial(
-	// 		fmt.Sprintf("consul://%s/%s", s.ConsulAddr, name),
-	// 		dialer.WithTracer(s.Tracer),
-	// 		dialer.WithBalancer(s.Registry.Client),
-	// 	)
-	// }
+	d := dagor.NewDagorNode(param)
+	clientOptions := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(d.UnaryInterceptorClient),
+	}
+	if name == "srv-reservation" {
+		return grpc.Dial("192.168.1.5:8087", clientOptions...)
+	} else if name == "srv-profile" {
+		return grpc.Dial("192.168.1.4:8081", clientOptions...)
+	} else if name == "srv-search" {
+		return grpc.Dial("192.168.1.3:8082", clientOptions...)
+	} else if name == "srv-user" {
+		return grpc.Dial("192.168.1.6:8086", clientOptions...)
+	} else if name == "srv-geo" {
+		return grpc.Dial("192.168.1.3:8083", clientOptions...)
+	} else if name == "srv-rate" {
+		return grpc.Dial("192.168.1.6:8084", clientOptions...)
+	}
+
+	return grpc.Dial("192.168.1.6:8084", clientOptions...)
 }
 
 // Nearby returns ids of nearby hotels ordered by ranking algo

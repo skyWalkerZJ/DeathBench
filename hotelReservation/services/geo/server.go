@@ -11,9 +11,9 @@ import (
 	"hotelReservation/tls"
 
 	"github.com/google/uuid"
-	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/hailocab/go-geoindex"
 	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/pennsail/dagor-grpc/dagor"
 	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -53,6 +53,23 @@ func (s *Server) Run() error {
 
 	s.uuid = uuid.New().String()
 
+	param := dagor.DagorParam{
+		NodeName:                     "frontend",
+		BusinessMap:                  map[string]int{"hotel": 1},
+		QueuingThresh:                5 * time.Millisecond,
+		EntryService:                 true,
+		IsEnduser:                    false,
+		AdmissionLevelUpdateInterval: 1 * time.Second,
+		Alpha:                        0.7,
+		Beta:                         0.3,
+		Umax:                         1000,
+		Bmax:                         500,
+		Debug:                        true,
+		UseSyncMap:                   false,
+	}
+
+	d := dagor.NewDagorNode(param)
+
 	opts := []grpc.ServerOption{
 		grpc.KeepaliveParams(keepalive.ServerParameters{
 			Timeout: 120 * time.Second,
@@ -60,9 +77,7 @@ func (s *Server) Run() error {
 		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
 			PermitWithoutStream: true,
 		}),
-		grpc.UnaryInterceptor(
-			otgrpc.OpenTracingServerInterceptor(s.Tracer),
-		),
+		grpc.UnaryInterceptor(d.UnaryInterceptorServer),
 	}
 
 	if tlsopt := tls.GetServerOpt(); tlsopt != nil {
@@ -78,12 +93,6 @@ func (s *Server) Run() error {
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
-
-	// err = s.Registry.Register(name, s.uuid, s.IpAddr, s.Port)
-	// if err != nil {
-	// 	return fmt.Errorf("failed register: %v", err)
-	// }
-	// log.Info().Msg("Successfully registered in consul")
 
 	return srv.Serve(lis)
 }
