@@ -8,9 +8,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/services/frontend"
-	"github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/tracing"
-	"github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/tune"
+	"hotelReservation/services/frontend"
+	"hotelReservation/tracing"
+	"hotelReservation/tune"
+
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )

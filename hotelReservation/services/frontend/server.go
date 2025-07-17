@@ -1,28 +1,35 @@
 package frontend
 
 import (
+	"context"
 	"embed"
 	"encoding/json"
 	"fmt"
-	"io/fs"
+	"net"
 	"net/http"
 	"strconv"
+	"time"
 
-	"github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/dialer"
-	"github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/registry"
-	attractions "github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/services/attractions/proto"
-	profile "github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/services/profile/proto"
-	recommendation "github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/services/recommendation/proto"
-	reservation "github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/services/reservation/proto"
-	review "github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/services/review/proto"
-	search "github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/services/search/proto"
-	user "github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/services/user/proto"
-	"github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/tls"
-	"github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/tracing"
+	pb "hotelReservation/services/frontend/proto"
+
+	"hotelReservation/dialer"
+	"hotelReservation/registry"
+	attractions "hotelReservation/services/attractions/proto"
+	profile "hotelReservation/services/profile/proto"
+	recommendation "hotelReservation/services/recommendation/proto"
+	reservation "hotelReservation/services/reservation/proto"
+	review "hotelReservation/services/review/proto"
+	search "hotelReservation/services/search/proto"
+	user "hotelReservation/services/user/proto"
+	"hotelReservation/tls"
+
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	_ "github.com/mbobakov/grpc-consul-resolver"
 	"github.com/opentracing/opentracing-go"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/status"
 )
 
@@ -33,6 +40,7 @@ var (
 
 // Server implements frontend service
 type Server struct {
+	pb.UnimplementedFrontendServer
 	searchClient         search.SearchClient
 	profileClient        profile.ProfileClient
 	recommendationClient recommendation.RecommendationClient
@@ -55,12 +63,6 @@ func (s *Server) Run() error {
 		return fmt.Errorf("Server port must be set")
 	}
 
-	log.Info().Msg("Loading static content...")
-	staticContent, err := fs.Sub(content, "static")
-	if err != nil {
-		return err
-	}
-
 	log.Info().Msg("Initializing gRPC clients...")
 	if err := s.initSearchClient("srv-search"); err != nil {
 		return err
@@ -70,10 +72,6 @@ func (s *Server) Run() error {
 		return err
 	}
 
-	// if err := s.initRecommendationClient("srv-recommendation"); err != nil {
-	// 	return err
-	// }
-
 	if err := s.initUserClient("srv-user"); err != nil {
 		return err
 	}
@@ -82,44 +80,41 @@ func (s *Server) Run() error {
 		return err
 	}
 
-	// if err := s.initReviewClient("srv-review"); err != nil {
-	// 	return err
-	// }
-
-	// if err := s.initAttractionsClient("srv-attractions"); err != nil {
-	// 	return err
-	// }
-
 	log.Info().Msg("Successful")
 
-	log.Info().Msg("frontend before mux")
-	mux := tracing.NewServeMux(s.Tracer)
-	// mux := http.NewServeMux()
-	mux.Handle("/", http.FileServer(http.FS(staticContent)))
-	mux.Handle("/hotels", http.HandlerFunc(s.searchHandler))
-	// mux.Handle("/recommendations", http.HandlerFunc(s.recommendHandler))
-	// mux.Handle("/user", http.HandlerFunc(s.userHandler))
-	// mux.Handle("/review", http.HandlerFunc(s.reviewHandler))
-	// mux.Handle("/restaurants", http.HandlerFunc(s.restaurantHandler))
-	// mux.Handle("/museums", http.HandlerFunc(s.museumHandler))
-	// mux.Handle("/cinema", http.HandlerFunc(s.cinemaHandler))
-	mux.Handle("/reservation", http.HandlerFunc(s.reservationHandler))
+	opentracing.SetGlobalTracer(s.Tracer)
 
-	log.Info().Msg("frontend starts serving")
+	if s.Port == 0 {
+		return fmt.Errorf("server port must be set")
+	}
 
-	tlsconfig := tls.GetHttpsOpt()
-	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%d", s.Port),
-		Handler: mux,
+	opts := []grpc.ServerOption{
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			Timeout: 120 * time.Second,
+		}),
+		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
+			PermitWithoutStream: true,
+		}),
+		grpc.UnaryInterceptor(
+			otgrpc.OpenTracingServerInterceptor(s.Tracer),
+		),
 	}
-	if tlsconfig != nil {
-		log.Info().Msg("Serving https")
-		srv.TLSConfig = tlsconfig
-		return srv.ListenAndServeTLS("x509/server_cert.pem", "x509/server_key.pem")
-	} else {
-		log.Info().Msg("Serving http")
-		return srv.ListenAndServe()
+
+	if tlsopt := tls.GetServerOpt(); tlsopt != nil {
+		opts = append(opts, tlsopt)
 	}
+
+	srv := grpc.NewServer(opts...)
+
+	pb.RegisterFrontendServer(srv, s)
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", s.Port))
+	if err != nil {
+		log.Fatal().Msgf("failed to listen: %v", err)
+	}
+
+	log.Info().Msgf("In reservation s.IpAddr = %s, port = %d", s.IpAddr, s.Port)
+	return srv.Serve(lis)
 }
 
 func (s *Server) initSearchClient(name string) error {
@@ -237,6 +232,89 @@ func (s *Server) getGprcConn(name string) (*grpc.ClientConn, error) {
 	// 		dialer.WithBalancer(s.Registry.Client),
 	// 	)
 	// }
+}
+func (s *Server) Search(ctx context.Context, req *pb.SearchRequest) (*pb.SearchResponse, error) {
+
+	log.Info().Msg("starts searchHandler")
+	inDate := req.GetInDate()
+	outDate := req.GetOutDate()
+
+	// in/out dates from query params
+	if inDate == "" || outDate == "" {
+		log.Error().Msg("Please specify inDate/outDate params")
+		return nil, status.Errorf(codes.InvalidArgument, "Please specify inDate/outDate params")
+	}
+
+	sLat := req.GetLat()
+	sLon := req.GetLon()
+	// lan/lon from query params
+
+	if sLat == "" || sLon == "" {
+		log.Error().Msg("Please specify location params")
+		return nil, status.Errorf(codes.InvalidArgument, "Please specify location params")
+	}
+
+	Lat, _ := strconv.ParseFloat(sLat, 32)
+	lat := float32(Lat)
+	Lon, _ := strconv.ParseFloat(sLon, 32)
+	lon := float32(Lon)
+
+	log.Trace().Msg("starts searchHandler querying downstream")
+
+	log.Trace().Msgf("SEARCH [lat: %v, lon: %v, inDate: %v, outDate: %v", lat, lon, inDate, outDate)
+	// search for best hotels
+	searchResp, err := s.searchClient.Nearby(ctx, &search.NearbyRequest{
+		Lat:     lat,
+		Lon:     lon,
+		InDate:  inDate,
+		OutDate: outDate,
+	})
+	if err != nil {
+		log.Error().Msg(err.Error())
+		return nil, status.Errorf(codes.Unavailable, "failed to call Nearby service: %v", err)
+	}
+
+	log.Trace().Msg("SearchHandler gets searchResp")
+	//for _, hid := range searchResp.HotelIds {
+	//	log.Trace().Msgf("Search Handler hotelId = %s", hid)
+	//}
+
+	locale := "en"
+
+	reservationResp, err := s.reservationClient.CheckAvailability(ctx, &reservation.Request{
+		CustomerName: "",
+		HotelId:      searchResp.HotelIds,
+		InDate:       inDate,
+		OutDate:      outDate,
+		RoomNumber:   1,
+	})
+	if err != nil {
+		log.Error().Msg("SearchHandler CheckAvailability failed")
+		return nil, status.Errorf(codes.Unavailable, "failed to call CheckAvailability service: %v", err)
+	}
+
+	log.Trace().Msgf("searchHandler gets reserveResp")
+	log.Trace().Msgf("searchHandler gets reserveResp.HotelId = %s", reservationResp.HotelId)
+
+	// hotel profiles
+	profileResp, err := s.profileClient.GetProfiles(ctx, &profile.Request{
+		HotelIds: reservationResp.HotelId,
+		Locale:   locale,
+	})
+	if err != nil {
+		log.Error().Msg("SearchHandler GetProfiles failed")
+		return nil, status.Errorf(codes.Unavailable, "failed to call GetProfiles service: %v", err)
+	}
+	log.Trace().Msg("searchHandler gets profileResp")
+
+	jsonbytes, err := json.Marshal(geoJSONResponse(profileResp.Hotels))
+	if err != nil {
+		log.Error().Msgf("Failed to marshal geoJSON response: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to call json.Marshal service: %v", err)
+	}
+	return &pb.SearchResponse{
+		Searchresult: string(jsonbytes),
+	}, nil
 }
 
 func (s *Server) searchHandler(w http.ResponseWriter, r *http.Request) {
@@ -615,6 +693,89 @@ func (s *Server) userHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+// 实现 Reservation RPC
+func (s *Server) Reservation(ctx context.Context, req *pb.ReservationRequest) (*pb.ReservationResponse, error) {
+
+	log.Info().Msg("starts searchHandler")
+	inDate := req.GetInDate()
+	outDate := req.GetOutDate()
+
+	// in/out dates from query params
+	if inDate == "" || outDate == "" {
+		log.Error().Msg("Please specify inDate/outDate params")
+		return nil, status.Errorf(codes.InvalidArgument, "Please specify inDate/outDate params")
+	}
+
+	if !checkDataFormat(inDate) || !checkDataFormat(outDate) {
+		return nil, status.Errorf(codes.InvalidArgument, "Please specify inDate/outDate params")
+	}
+
+	hotelId := req.GetHotelId()
+	if hotelId == "" {
+		log.Error().Msg("Please specify hotelId params")
+		return nil, status.Errorf(codes.InvalidArgument, "Please specify hotelId params")
+	}
+
+	customerName := req.GetCustomerName()
+	if customerName == "" {
+		log.Error().Msg("Please specify customerName params")
+		return nil, status.Errorf(codes.InvalidArgument, "Please specify customerName params")
+	}
+
+	// username, password := r.URL.Query().Get("username"), r.URL.Query().Get("password")
+	// if username == "" || password == "" {
+	// 	http.Error(w, "Please specify username and password", http.StatusBadRequest)
+	// 	return
+	// }
+
+	numberOfRoom := 0
+	num := req.GetNumber()
+	if num != "" {
+		numberOfRoom, _ = strconv.Atoi(num)
+	}
+
+	// Check username and password
+	// recResp, err := s.userClient.CheckUser(ctx, &user.Request{
+	// 	Username: username,
+	// 	Password: password,
+	// })
+	// if err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
+
+	str := "Reserve successfully!"
+	// if recResp.Correct == false {
+	// 	str = "Failed. Please check your username and password. "
+	// }
+
+	// Make reservation
+	resResp, err := s.reservationClient.MakeReservation(ctx, &reservation.Request{
+		CustomerName: customerName,
+		HotelId:      []string{hotelId},
+		InDate:       inDate,
+		OutDate:      outDate,
+		RoomNumber:   int32(numberOfRoom),
+	})
+	if err != nil {
+		log.Error().Msg(err.Error())
+		return nil, status.Errorf(codes.Unavailable, "failed to call MakeReservation service: %v", err)
+	}
+	if len(resResp.HotelId) == 0 {
+		str = "Failed. Already reserved. "
+	}
+
+	res := map[string]interface{}{
+		"message": str,
+	}
+
+	jsonbytes, err := json.Marshal(res)
+	if err != nil {
+		log.Error().Msg(err.Error())
+		return nil, status.Errorf(codes.Unavailable, "failed to call json.Marshal service: %v", err)
+	}
+	return &pb.ReservationResponse{Reservationresult: string(jsonbytes)}, nil
+}
 func (s *Server) reservationHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	ctx := r.Context()

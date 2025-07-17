@@ -6,9 +6,10 @@ import (
 	"net"
 	"time"
 
-	"github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/registry"
-	pb "github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/services/geo/proto"
-	"github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/tls"
+	"hotelReservation/registry"
+	pb "hotelReservation/services/geo/proto"
+	"hotelReservation/tls"
+
 	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/hailocab/go-geoindex"

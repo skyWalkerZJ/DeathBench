@@ -7,9 +7,10 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/services/rate"
-	"github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/tracing"
-	"github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/tune"
+	"hotelReservation/services/rate"
+	"hotelReservation/tracing"
+	"hotelReservation/tune"
+
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 

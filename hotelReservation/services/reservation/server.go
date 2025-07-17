@@ -9,10 +9,11 @@ import (
 	"sync"
 	"time"
 
+	"hotelReservation/registry"
+	pb "hotelReservation/services/reservation/proto"
+	"hotelReservation/tls"
+
 	"github.com/bradfitz/gomemcache/memcache"
-	"github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/registry"
-	pb "github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/services/reservation/proto"
-	"github.com/delimitrou/DeathStarBench/tree/master/hotelReservation/tls"
 	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/opentracing/opentracing-go"

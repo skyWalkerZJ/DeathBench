@@ -1,6 +1,7 @@
 {
   "consulAddress": "192.168.1.1:8500",
   "jaegerAddress": "192.168.1.1:6831",
+  "FrontendIP": "127.0.0.1",
   "FrontendPort": "5000",
   "GeoPort": "8083",
   "GeoMongoAddress": "192.168.1.2:27017",

@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package frontend;
+option go_package = "hotelReservation/services/frontend";
+
+service Frontend {
+  rpc search(SearchRequest) returns (SearchResponse);
+  rpc Reservation(ReservationRequest) returns (ReservationResponse);
+}
+
+message SearchRequest {
+    string inDate = 3;
+    string outDate = 4;
+    string lat = 1;
+    string lon = 2;
+}
+
+message SearchResponse {
+    string searchresult = 1;
+}
+
+message ReservationRequest {
+    string inDate = 1;
+    string outDate = 2;
+    string hotelId = 3;
+    string customerName = 4;
+    string number = 5;
+}
+
+message ReservationResponse {
+    string reservationresult = 1;
+}
