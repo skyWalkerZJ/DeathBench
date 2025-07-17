@@ -14,9 +14,9 @@ import (
 	"hotelReservation/tls"
 
 	"github.com/google/uuid"
-	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	_ "github.com/mbobakov/grpc-consul-resolver"
-	"github.com/opentracing/opentracing-go"
+
+	// "github.com/opentracing/opentracing-go"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
@@ -55,9 +55,9 @@ func (s *Server) Run() error {
 		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
 			PermitWithoutStream: true,
 		}),
-		grpc.UnaryInterceptor(
-			otgrpc.OpenTracingServerInterceptor(s.Tracer),
-		),
+		// grpc.UnaryInterceptor(
+		// 	otgrpc.OpenTracingServerInterceptor(s.Tracer),
+		// ),
 	}
 
 	if tlsopt := tls.GetServerOpt(); tlsopt != nil {
