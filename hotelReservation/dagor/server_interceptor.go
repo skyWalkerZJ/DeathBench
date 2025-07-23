@@ -23,10 +23,10 @@ func (d *Dagor) UnaryInterceptorServer(ctx context.Context, req interface{}, inf
 	if len(methodName) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "Method name not provided in metadata")
 	}
-	userIDs, userIDExists := md["user-id"]
+	// userIDs, userIDExists := md["user-id"]
 	var B, U int
 	var err error
-
+	userID := "1"
 	// if this is an entry service, B and U are not in metadata
 	if d.entryService {
 		if businessValue, exists := d.businessMap[methodName]; exists {
@@ -46,8 +46,8 @@ func (d *Dagor) UnaryInterceptorServer(ctx context.Context, req interface{}, inf
 			d.businessMap[methodName] = B
 			logger("[Entry service] Entry service can't find Business value for method %s, assigned a random value %d", methodName, B)
 		}
-		if userIDExists && len(userIDs) > 0 {
-			userID := userIDs[0]
+		if len(userID) > 0 {
+			// userID := userIDs[0]
 			if val, ok := d.userPriority.Load(userID); ok {
 				U = val.(int)
 				logger("[Entry service] User %s already has a priority value assigned: %d", userID, U)
