@@ -15,13 +15,13 @@ import (
 )
 
 func (d *Dagor) UnaryInterceptorServer(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	logger("context: %d", ctx)
 	md, _ := metadata.FromIncomingContext(ctx)
 	// methodNames, methodExists := md["method"]
 	methodName := info.FullMethod
 	logger("method name %s in server", methodName)
 	// Ensure method name is present
 	if len(methodName) == 0 {
+		logger("Method name not provided in metadata")
 		return nil, status.Errorf(codes.InvalidArgument, "Method name not provided in metadata")
 	}
 	// userIDs, userIDExists := md["user-id"]
