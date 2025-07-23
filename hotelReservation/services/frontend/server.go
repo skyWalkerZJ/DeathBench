@@ -62,20 +62,36 @@ func (s *Server) Run() error {
 		return fmt.Errorf("Server port must be set")
 	}
 
+	client_param := dagor.DagorParam{
+		NodeName:                     "frontend",
+		BusinessMap:                  map[string]int{"hotel": 1},
+		QueuingThresh:                5 * time.Millisecond,
+		EntryService:                 false,
+		IsEnduser:                    false,
+		AdmissionLevelUpdateInterval: 1 * time.Second,
+		Alpha:                        0.7,
+		Beta:                         0.3,
+		Umax:                         1000,
+		Bmax:                         500,
+		Debug:                        true,
+		UseSyncMap:                   false,
+	}
+
+	clientDagor := dagor.NewDagorNode(client_param)
 	log.Info().Msg("Initializing gRPC clients...")
-	if err := s.initSearchClient("srv-search"); err != nil {
+	if err := s.initSearchClient("srv-search", clientDagor); err != nil {
 		return err
 	}
 
-	if err := s.initProfileClient("srv-profile"); err != nil {
+	if err := s.initProfileClient("srv-profile", clientDagor); err != nil {
 		return err
 	}
 
-	if err := s.initUserClient("srv-user"); err != nil {
+	if err := s.initUserClient("srv-user", clientDagor); err != nil {
 		return err
 	}
 
-	if err := s.initReservation("srv-reservation"); err != nil {
+	if err := s.initReservation("srv-reservation", clientDagor); err != nil {
 		return err
 	}
 
@@ -87,7 +103,7 @@ func (s *Server) Run() error {
 		return fmt.Errorf("server port must be set")
 	}
 
-	param := dagor.DagorParam{
+	server_param := dagor.DagorParam{
 		NodeName:                     "frontend",
 		BusinessMap:                  map[string]int{"Search": 2, "Reservation": 1},
 		QueuingThresh:                5 * time.Millisecond,
@@ -102,7 +118,7 @@ func (s *Server) Run() error {
 		UseSyncMap:                   false,
 	}
 
-	d := dagor.NewDagorNode(param)
+	d := dagor.NewDagorNode(server_param)
 
 	opts := []grpc.ServerOption{
 		grpc.KeepaliveParams(keepalive.ServerParameters{
@@ -131,24 +147,24 @@ func (s *Server) Run() error {
 	return srv.Serve(lis)
 }
 
-func (s *Server) initSearchClient(name string) error {
-	conn, err := s.getGprcConn(name)
+func (s *Server) initSearchClient(name string, d *dagor.Dagor) error {
+	conn, err := s.getGprcConn(name, d)
 	if err != nil {
 		return fmt.Errorf("dialer error: %v", err)
 	}
 	s.searchClient = search.NewSearchClient(conn)
 	return nil
 }
-func (s *Server) initProfileClient(name string) error {
-	conn, err := s.getGprcConn(name)
+func (s *Server) initProfileClient(name string, d *dagor.Dagor) error {
+	conn, err := s.getGprcConn(name, d)
 	if err != nil {
 		return fmt.Errorf("dialer error: %v", err)
 	}
 	s.profileClient = profile.NewProfileClient(conn)
 	return nil
 }
-func (s *Server) initUserClient(name string) error {
-	conn, err := s.getGprcConn(name)
+func (s *Server) initUserClient(name string, d *dagor.Dagor) error {
+	conn, err := s.getGprcConn(name, d)
 	if err != nil {
 		return fmt.Errorf("dialer error: %v", err)
 	}
@@ -156,8 +172,8 @@ func (s *Server) initUserClient(name string) error {
 	return nil
 }
 
-func (s *Server) initReservation(name string) error {
-	conn, err := s.getGprcConn(name)
+func (s *Server) initReservation(name string, d *dagor.Dagor) error {
+	conn, err := s.getGprcConn(name, d)
 	if err != nil {
 		return fmt.Errorf("dialer error: %v", err)
 	}
@@ -165,27 +181,11 @@ func (s *Server) initReservation(name string) error {
 	return nil
 }
 
-func (s *Server) getGprcConn(name string) (*grpc.ClientConn, error) {
+func (s *Server) getGprcConn(name string, d *dagor.Dagor) (*grpc.ClientConn, error) {
 	log.Info().Msg("get Grpc conn is :")
 	log.Info().Msg(s.KnativeDns)
 	log.Info().Msg(fmt.Sprintf("%s.%s", name, s.KnativeDns))
 
-	param := dagor.DagorParam{
-		NodeName:                     "frontend",
-		BusinessMap:                  map[string]int{"hotel": 1},
-		QueuingThresh:                5 * time.Millisecond,
-		EntryService:                 false,
-		IsEnduser:                    false,
-		AdmissionLevelUpdateInterval: 1 * time.Second,
-		Alpha:                        0.7,
-		Beta:                         0.3,
-		Umax:                         1000,
-		Bmax:                         500,
-		Debug:                        true,
-		UseSyncMap:                   false,
-	}
-
-	d := dagor.NewDagorNode(param)
 	clientOptions := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(d.UnaryInterceptorClient),
