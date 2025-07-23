@@ -17,6 +17,7 @@ type ThresholdTable struct {
 }
 
 func (d *Dagor) UnaryInterceptorClient(ctx context.Context, method string, req interface{}, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	logger("method name: %s", method)
 	// if d.isEnduser, attach user id to metadata and send request
 	if d.isEnduser {
 		ctx = metadata.AppendToOutgoingContext(ctx, "user-id", d.uuid)
@@ -35,8 +36,6 @@ func (d *Dagor) UnaryInterceptorClient(ctx context.Context, method string, req i
 		logger("could not retrieve metadata from context")
 		return errors.New("could not retrieve metadata from context")
 	}
-
-	logger("method name: %s", method)
 
 	// Check if B and U are in the metadata
 	BValues, BExists := md["b"]
