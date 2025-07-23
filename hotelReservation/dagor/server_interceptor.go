@@ -120,6 +120,10 @@ func (d *Dagor) UnaryInterceptorServer(ctx context.Context, req interface{}, inf
 		return nil, status.Errorf(codes.ResourceExhausted, "[Server Admission Control] Request B, U values do not meet the threshold")
 	}
 
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if !ok {
+		logger("[Test] could not retrieve metadata from context")
+	}
 	// Handle the request
 	resp, err := handler(ctx, req)
 	if err != nil {
