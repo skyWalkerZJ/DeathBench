@@ -150,17 +150,17 @@ func (s *Server) getGprcConn(name string, d *dagor.Dagor) (*grpc.ClientConn, err
 		grpc.WithUnaryInterceptor(d.UnaryInterceptorClient),
 	}
 	if name == "srv-reservation" {
-		return grpc.Dial("192.168.1.5:8087", clientOptions...)
+		return grpc.Dial("192.168.1.4:8084", clientOptions...)
 	} else if name == "srv-profile" {
-		return grpc.Dial("192.168.1.4:8081", clientOptions...)
+		return grpc.Dial("192.168.1.5:8086", clientOptions...)
 	} else if name == "srv-search" {
-		return grpc.Dial("192.168.1.3:8082", clientOptions...)
+		return grpc.Dial("192.168.1.3:8083", clientOptions...)
 	} else if name == "srv-user" {
 		return grpc.Dial("192.168.1.6:8086", clientOptions...)
 	} else if name == "srv-geo" {
-		return grpc.Dial("192.168.1.7:8083", clientOptions...)
+		return grpc.Dial("192.168.1.5:8085", clientOptions...)
 	} else if name == "srv-rate" {
-		return grpc.Dial("192.168.1.8:8084", clientOptions...)
+		return grpc.Dial("192.168.1.5:8087", clientOptions...)
 	}
 
 	return grpc.Dial("192.168.1.6:8084", clientOptions...)

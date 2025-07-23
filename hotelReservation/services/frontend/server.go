@@ -88,9 +88,9 @@ func (s *Server) Run() error {
 		return err
 	}
 
-	if err := s.initUserClient("srv-user", clientDagor); err != nil {
-		return err
-	}
+	// if err := s.initUserClient("srv-user", clientDagor); err != nil {
+	// 	return err
+	// }
 
 	if err := s.initReservation("srv-reservation", clientDagor); err != nil {
 		return err
@@ -192,11 +192,11 @@ func (s *Server) getGprcConn(name string, d *dagor.Dagor) (*grpc.ClientConn, err
 		grpc.WithUnaryInterceptor(d.UnaryInterceptorClient),
 	}
 	if name == "srv-reservation" {
-		return grpc.Dial("192.168.1.5:8087", clientOptions...)
+		return grpc.Dial("192.168.1.4:8084", clientOptions...)
 	} else if name == "srv-profile" {
-		return grpc.Dial("192.168.1.4:8081", clientOptions...)
+		return grpc.Dial("192.168.1.5:8086", clientOptions...)
 	} else if name == "srv-search" {
-		return grpc.Dial("192.168.1.3:8082", clientOptions...)
+		return grpc.Dial("192.168.1.3:8083", clientOptions...)
 	} else if name == "srv-user" {
 		return grpc.Dial("192.168.1.6:8086", clientOptions...)
 	}
@@ -239,12 +239,6 @@ func (s *Server) Search(ctx context.Context, req *pb.SearchRequest) (*pb.SearchR
 
 	log.Trace().Msgf("SEARCH [lat: %v, lon: %v, inDate: %v, outDate: %v", lat, lon, inDate, outDate)
 	// search for best hotels
-	md, ok = metadata.FromOutgoingContext(ctx)
-	if !ok {
-		md.Len()
-		log.Info().Msg("could not retrieve metadata from context in search")
-	}
-	log.Info().Msg("retrieve metadata from context in search")
 	searchResp, err := s.searchClient.Nearby(ctx, &search.NearbyRequest{
 		Lat:     lat,
 		Lon:     lon,
