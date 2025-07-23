@@ -6,6 +6,7 @@ import (
 	"net"
 	"time"
 
+	"hotelReservation/dagor"
 	"hotelReservation/registry"
 	pb "hotelReservation/services/geo/proto"
 	"hotelReservation/tls"
@@ -13,7 +14,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/hailocab/go-geoindex"
 	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/pennsail/dagor-grpc/dagor"
 	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
