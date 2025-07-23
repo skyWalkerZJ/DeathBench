@@ -29,6 +29,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -204,7 +205,11 @@ func (s *Server) getGprcConn(name string, d *dagor.Dagor) (*grpc.ClientConn, err
 }
 func (s *Server) Search(ctx context.Context, req *pb.SearchRequest) (*pb.SearchResponse, error) {
 
-	log.Info().Msg("starts searchHandler")
+	// Extracting metadata
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if !ok {
+		log.Info().Msg("could not retrieve metadata from context in search")
+	}
 	inDate := req.GetInDate()
 	outDate := req.GetOutDate()
 

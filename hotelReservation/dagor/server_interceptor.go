@@ -15,6 +15,7 @@ import (
 )
 
 func (d *Dagor) UnaryInterceptorServer(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	logger("context: %d", ctx)
 	md, _ := metadata.FromIncomingContext(ctx)
 	// methodNames, methodExists := md["method"]
 	methodName := info.FullMethod
@@ -72,6 +73,7 @@ func (d *Dagor) UnaryInterceptorServer(ctx context.Context, req interface{}, inf
 		logger("[Entry service] %s assigned user B: %d, U: %d", d.nodeName, B, U)
 		// Modify ctx with the B and U
 		ctx = metadata.AppendToOutgoingContext(ctx, "b", strconv.Itoa(B), "u", strconv.Itoa(U))
+		logger("context: %d", ctx)
 	} else {
 		BValues, BExists := md["b"]
 		UValues, UExists := md["u"]
@@ -126,6 +128,8 @@ func (d *Dagor) UnaryInterceptorServer(ctx context.Context, req interface{}, inf
 	}
 
 	logger("[Test] retrieve metadata from context")
+
+	logger("context: %d", ctx)
 	// Handle the request
 	resp, err := handler(ctx, req)
 	if err != nil {
