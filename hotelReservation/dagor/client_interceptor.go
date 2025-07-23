@@ -17,6 +17,7 @@ type ThresholdTable struct {
 }
 
 func (d *Dagor) UnaryInterceptorClient(ctx context.Context, method string, req interface{}, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	logger("client_interceptor================")
 	logger("method name: %s", method)
 	// if d.isEnduser, attach user id to metadata and send request
 	if d.isEnduser {
