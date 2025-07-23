@@ -15,11 +15,11 @@ import (
 
 func (d *Dagor) UnaryInterceptorServer(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	md, _ := metadata.FromIncomingContext(ctx)
-	methodNames, methodExists := md["method"]
-	methodName := info.FullMethod
+	// methodNames, methodExists := md["method"]
+	methodName, methodExists := info.FullMethod
 	logger("method name %s in server", methodName)
 	// Ensure method name is present
-	if !methodExists || len(methodNames) == 0 {
+	if !methodExists || len(methodName) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "Method name not provided in metadata")
 	}
 	userIDs, userIDExists := md["user-id"]
@@ -28,7 +28,6 @@ func (d *Dagor) UnaryInterceptorServer(ctx context.Context, req interface{}, inf
 
 	// if this is an entry service, B and U are not in metadata
 	if d.entryService {
-		methodName := methodNames[0]
 		if businessValue, exists := d.businessMap[methodName]; exists {
 			B = businessValue
 			logger("[Entry service] Entry service found Business value %d for method %s", B, methodName)
