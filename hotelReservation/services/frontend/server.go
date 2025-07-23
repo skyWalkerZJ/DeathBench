@@ -105,7 +105,7 @@ func (s *Server) Run() error {
 
 	server_param := dagor.DagorParam{
 		NodeName:                     "frontend",
-		BusinessMap:                  map[string]int{"Search": 2, "Reservation": 1},
+		BusinessMap:                  map[string]int{"/frontend.Frontend/search": 2, "/frontend.Frontend/reservation": 1},
 		QueuingThresh:                5 * time.Millisecond,
 		EntryService:                 true,
 		IsEnduser:                    false,

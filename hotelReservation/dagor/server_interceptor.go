@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -57,7 +58,16 @@ func (d *Dagor) UnaryInterceptorServer(ctx context.Context, req interface{}, inf
 				logger("User %s assigned a priority value: %d", userID, U)
 			}
 		} else {
-			return nil, status.Errorf(codes.InvalidArgument, "User ID not provided in metadata")
+			userID := uuid.New().String()
+			if val, ok := d.userPriority.Load(userID); ok {
+				U = val.(int)
+				logger("[Entry service] User %s already has a priority value assigned: %d", userID, U)
+			} else {
+				// Assign a random int for U between 1 and Umax
+				U = rand.Intn(d.Umax) + 1
+				d.userPriority.Store(userID, U)
+				logger("User %s assigned a priority value: %d", userID, U)
+			}
 		}
 		logger("[Entry service] %s assigned user B: %d, U: %d", d.nodeName, B, U)
 		// Modify ctx with the B and U
