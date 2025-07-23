@@ -124,6 +124,8 @@ func (d *Dagor) UnaryInterceptorServer(ctx context.Context, req interface{}, inf
 	if !ok {
 		logger("[Test] could not retrieve metadata from context")
 	}
+
+	logger("[Test] retrieve metadata from context")
 	// Handle the request
 	resp, err := handler(ctx, req)
 	if err != nil {
