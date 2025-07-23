@@ -239,6 +239,12 @@ func (s *Server) Search(ctx context.Context, req *pb.SearchRequest) (*pb.SearchR
 
 	log.Trace().Msgf("SEARCH [lat: %v, lon: %v, inDate: %v, outDate: %v", lat, lon, inDate, outDate)
 	// search for best hotels
+	md, ok = metadata.FromOutgoingContext(ctx)
+	if !ok {
+		md.Len()
+		log.Info().Msg("could not retrieve metadata from context in search")
+	}
+	log.Info().Msg("retrieve metadata from context in search")
 	searchResp, err := s.searchClient.Nearby(ctx, &search.NearbyRequest{
 		Lat:     lat,
 		Lon:     lon,

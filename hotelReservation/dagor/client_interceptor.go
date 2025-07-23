@@ -32,6 +32,7 @@ func (d *Dagor) UnaryInterceptorClient(ctx context.Context, method string, req i
 	// Extracting metadata
 	md, ok := metadata.FromOutgoingContext(ctx)
 	if !ok {
+		logger("could not retrieve metadata from context")
 		return errors.New("could not retrieve metadata from context")
 	}
 
