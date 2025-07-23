@@ -211,6 +211,7 @@ func (s *Server) Search(ctx context.Context, req *pb.SearchRequest) (*pb.SearchR
 		md.Len()
 		log.Info().Msg("could not retrieve metadata from context in search")
 	}
+	log.Info().Msg("retrieve metadata from context in search")
 	inDate := req.GetInDate()
 	outDate := req.GetOutDate()
 
