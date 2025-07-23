@@ -35,6 +35,7 @@ func (d *Dagor) UnaryInterceptorClient(ctx context.Context, method string, req i
 		return errors.New("could not retrieve metadata from context")
 	}
 
+	logger("method name: %s", method)
 	// Extracting method name and determining B value
 	methodName, ok := md["method"]
 	if !ok || len(methodName) == 0 {
