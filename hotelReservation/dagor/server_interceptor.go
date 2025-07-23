@@ -73,8 +73,7 @@ func (d *Dagor) UnaryInterceptorServer(ctx context.Context, req interface{}, inf
 		}
 		logger("[Entry service] %s assigned user B: %d, U: %d", d.nodeName, B, U)
 		// Modify ctx with the B and U
-		ctx = metadata.AppendToOutgoingContext(ctx, "b", strconv.Itoa(B), "u", strconv.Itoa(U))
-		logger("context: %d", ctx)
+		// ctx = metadata.AppendToOutgoingContext(ctx, "b", strconv.Itoa(B), "u", strconv.Itoa(U))
 	} else {
 		BValues, BExists := md["b"]
 		UValues, UExists := md["u"]
@@ -128,6 +127,7 @@ func (d *Dagor) UnaryInterceptorServer(ctx context.Context, req interface{}, inf
 	// Handle the request
 	resp, err := handler(ctx, req)
 	if err != nil {
+		logger("handler %s invorker failed", methodName)
 		return nil, err
 	}
 
