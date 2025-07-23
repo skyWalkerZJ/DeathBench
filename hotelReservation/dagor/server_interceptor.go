@@ -16,7 +16,8 @@ import (
 func (d *Dagor) UnaryInterceptorServer(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	md, _ := metadata.FromIncomingContext(ctx)
 	methodNames, methodExists := md["method"]
-	logger("method name %s in server", methodNames[0])
+	methodName := info.FullMethod
+	logger("method name %s in server", methodName)
 	// Ensure method name is present
 	if !methodExists || len(methodNames) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "Method name not provided in metadata")
