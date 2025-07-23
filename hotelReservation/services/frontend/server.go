@@ -89,7 +89,7 @@ func (s *Server) Run() error {
 
 	param := dagor.DagorParam{
 		NodeName:                     "frontend",
-		BusinessMap:                  map[string]int{"hotel": 1},
+		BusinessMap:                  map[string]int{"Search": 2, "Reservation": 1},
 		QueuingThresh:                5 * time.Millisecond,
 		EntryService:                 true,
 		IsEnduser:                    false,
@@ -174,7 +174,7 @@ func (s *Server) getGprcConn(name string) (*grpc.ClientConn, error) {
 		NodeName:                     "frontend",
 		BusinessMap:                  map[string]int{"hotel": 1},
 		QueuingThresh:                5 * time.Millisecond,
-		EntryService:                 true,
+		EntryService:                 false,
 		IsEnduser:                    false,
 		AdmissionLevelUpdateInterval: 1 * time.Second,
 		Alpha:                        0.7,

@@ -27,6 +27,7 @@ func (d *Dagor) UnaryInterceptorServer(ctx context.Context, req interface{}, inf
 	// if this is an entry service, B and U are not in metadata
 	if d.entryService {
 		methodName := methodNames[0]
+		logger("method name %s in server", methodName)
 		if businessValue, exists := d.businessMap[methodName]; exists {
 			B = businessValue
 			logger("[Entry service] Entry service found Business value %d for method %s", B, methodName)

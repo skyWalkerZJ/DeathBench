@@ -41,6 +41,8 @@ func (d *Dagor) UnaryInterceptorClient(ctx context.Context, method string, req i
 		return errors.New("method name not found in metadata")
 	}
 
+	logger("method name: %s", methodName[0])
+
 	// Check if B and U are in the metadata
 	BValues, BExists := md["b"]
 	UValues, UExists := md["u"]
