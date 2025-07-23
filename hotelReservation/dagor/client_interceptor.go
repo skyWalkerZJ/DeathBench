@@ -36,13 +36,6 @@ func (d *Dagor) UnaryInterceptorClient(ctx context.Context, method string, req i
 	}
 
 	logger("method name: %s", method)
-	// Extracting method name and determining B value
-	methodName, ok := md["method"]
-	if !ok || len(methodName) == 0 {
-		return errors.New("method name not found in metadata")
-	}
-
-	logger("method name: %s", methodName[0])
 
 	// Check if B and U are in the metadata
 	BValues, BExists := md["b"]
@@ -63,7 +56,7 @@ func (d *Dagor) UnaryInterceptorClient(ctx context.Context, method string, req i
 	// check if B and U against threshold table before sending sub-request
 	// Thresholding
 
-	val, ok := d.thresholdTable.Load(methodName[0])
+	val, ok := d.thresholdTable.Load(method)
 	if ok {
 		threshold := val.(thresholdVal)
 		if B > threshold.Bstar || (B == threshold.Bstar && U > threshold.Ustar) {
@@ -72,7 +65,7 @@ func (d *Dagor) UnaryInterceptorClient(ctx context.Context, method string, req i
 		}
 		logger("[Ratelimiting] B %d and U %d values below the threshold B* %d and U* %d, request sent", B, U, threshold.Bstar, threshold.Ustar)
 	} else {
-		logger("[Ratelimiting] B* and U* values not found in the threshold table for method %s.", methodName[0])
+		logger("[Ratelimiting] B* and U* values not found in the threshold table for method %s.", method)
 	}
 
 	// Invoking the gRPC call
@@ -88,7 +81,7 @@ func (d *Dagor) UnaryInterceptorClient(ctx context.Context, method string, req i
 	if len(BstarValues) > 0 && len(UstarValues) > 0 {
 		Bstar, _ := strconv.Atoi(BstarValues[0])
 		Ustar, _ := strconv.Atoi(UstarValues[0])
-		d.thresholdTable.Store(methodName[0], thresholdVal{Bstar: Bstar, Ustar: Ustar})
+		d.thresholdTable.Store(method, thresholdVal{Bstar: Bstar, Ustar: Ustar})
 		// d.thresholdTable[methodName[0]] = thresholdVal{Bstar: Bstar, Ustar: Ustar}
 		logger("Received B* and U* values from the header: B*=%d, U*=%d", Bstar, Ustar)
 	}
