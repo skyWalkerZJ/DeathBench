@@ -52,10 +52,10 @@ func (s *Server) Run() error {
 	log.Trace().Msgf("in run s.IpAddr = %s, port = %d", s.IpAddr, s.Port)
 
 	param := dagor.DagorParam{
-		NodeName:                     "frontend",
+		NodeName:                     "profile",
 		BusinessMap:                  map[string]int{"hotel": 1},
 		QueuingThresh:                5 * time.Millisecond,
-		EntryService:                 true,
+		EntryService:                 false,
 		IsEnduser:                    false,
 		AdmissionLevelUpdateInterval: 1 * time.Second,
 		Alpha:                        0.7,

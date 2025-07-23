@@ -49,10 +49,10 @@ func (s *Server) Run() error {
 
 	s.uuid = uuid.New().String()
 	param := dagor.DagorParam{
-		NodeName:                     "frontend",
+		NodeName:                     "search",
 		BusinessMap:                  map[string]int{"hotel": 1},
 		QueuingThresh:                5 * time.Millisecond,
-		EntryService:                 true,
+		EntryService:                 false,
 		IsEnduser:                    false,
 		AdmissionLevelUpdateInterval: 1 * time.Second,
 		Alpha:                        0.7,
@@ -82,11 +82,27 @@ func (s *Server) Run() error {
 	srv := grpc.NewServer(opts...)
 	pb.RegisterSearchServer(srv, s)
 
+	client_param := dagor.DagorParam{
+		NodeName:                     "search",
+		BusinessMap:                  map[string]int{"/search.Search/Nearby": 1, "/search.Search/Nearb": 2},
+		QueuingThresh:                5 * time.Millisecond,
+		EntryService:                 false,
+		IsEnduser:                    false,
+		AdmissionLevelUpdateInterval: 1 * time.Second,
+		Alpha:                        0.7,
+		Beta:                         0.3,
+		Umax:                         1000,
+		Bmax:                         500,
+		Debug:                        true,
+		UseSyncMap:                   false,
+	}
+
+	clientDagor := dagor.NewDagorNode(client_param)
 	// init grpc clients
-	if err := s.initGeoClient("srv-geo"); err != nil {
+	if err := s.initGeoClient("srv-geo", clientDagor); err != nil {
 		return err
 	}
-	if err := s.initRateClient("srv-rate"); err != nil {
+	if err := s.initRateClient("srv-rate", clientDagor); err != nil {
 		return err
 	}
 
@@ -109,8 +125,8 @@ func (s *Server) Shutdown() {
 	s.Registry.Deregister(s.uuid)
 }
 
-func (s *Server) initGeoClient(name string) error {
-	conn, err := s.getGprcConn(name)
+func (s *Server) initGeoClient(name string, d *dagor.Dagor) error {
+	conn, err := s.getGprcConn(name, d)
 	if err != nil {
 		return fmt.Errorf("dialer error: %v", err)
 	}
@@ -118,8 +134,8 @@ func (s *Server) initGeoClient(name string) error {
 	return nil
 }
 
-func (s *Server) initRateClient(name string) error {
-	conn, err := s.getGprcConn(name)
+func (s *Server) initRateClient(name string, d *dagor.Dagor) error {
+	conn, err := s.getGprcConn(name, d)
 	if err != nil {
 		return fmt.Errorf("dialer error: %v", err)
 	}
@@ -127,23 +143,7 @@ func (s *Server) initRateClient(name string) error {
 	return nil
 }
 
-func (s *Server) getGprcConn(name string) (*grpc.ClientConn, error) {
-	param := dagor.DagorParam{
-		NodeName:                     "frontend",
-		BusinessMap:                  map[string]int{"hotel": 1},
-		QueuingThresh:                5 * time.Millisecond,
-		EntryService:                 true,
-		IsEnduser:                    false,
-		AdmissionLevelUpdateInterval: 1 * time.Second,
-		Alpha:                        0.7,
-		Beta:                         0.3,
-		Umax:                         1000,
-		Bmax:                         500,
-		Debug:                        true,
-		UseSyncMap:                   false,
-	}
-
-	d := dagor.NewDagorNode(param)
+func (s *Server) getGprcConn(name string, d *dagor.Dagor) (*grpc.ClientConn, error) {
 	clientOptions := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(d.UnaryInterceptorClient),
