@@ -93,6 +93,7 @@ func (s *Server) Run() error {
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
+	log.Info().Msgf("In reservation s.IpAddr = %s, port = %d", s.IpAddr, s.Port)
 
 	return srv.Serve(lis)
 }

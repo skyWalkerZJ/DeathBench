@@ -90,6 +90,7 @@ func (s *Server) Run() error {
 		log.Fatal().Msgf("failed to configure listener: %v", err)
 	}
 
+	log.Info().Msgf("In reservation s.IpAddr = %s, port = %d", s.IpAddr, s.Port)
 	return srv.Serve(lis)
 }
 
