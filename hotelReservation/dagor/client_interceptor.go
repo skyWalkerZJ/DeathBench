@@ -73,6 +73,7 @@ func (d *Dagor) UnaryInterceptorClient(ctx context.Context, method string, req i
 	var header metadata.MD
 	err := invoker(ctx, method, req, reply, cc, grpc.Header(&header))
 	if err != nil {
+		logger("invoker %s failed in client_interceptor", method)
 		return err
 	}
 

@@ -55,7 +55,7 @@ func (s *Server) Run() error {
 
 	param := dagor.DagorParam{
 		NodeName:                     "geo",
-		BusinessMap:                  map[string]int{"hotel": 1},
+		BusinessMap:                  map[string]int{"/geo.Geo/NearBy": 1},
 		QueuingThresh:                5 * time.Millisecond,
 		EntryService:                 false,
 		IsEnduser:                    false,

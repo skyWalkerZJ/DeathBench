@@ -21,7 +21,7 @@ func (d *Dagor) UnaryInterceptorServer(ctx context.Context, req interface{}, inf
 	methodName := info.FullMethod
 	logger("method name %s in server", methodName)
 	// Ensure method name is present
-	if len(methodName) == 0 {
+	if methodName == "" {
 		logger("Method name not provided in metadata")
 		return nil, status.Errorf(codes.InvalidArgument, "Method name not provided in metadata")
 	}

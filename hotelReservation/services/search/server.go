@@ -169,7 +169,7 @@ func (s *Server) getGprcConn(name string, d *dagor.Dagor) (*grpc.ClientConn, err
 // Nearby returns ids of nearby hotels ordered by ranking algo
 func (s *Server) Nearby(ctx context.Context, req *pb.NearbyRequest) (*pb.SearchResult, error) {
 	// find nearby hotels
-	log.Trace().Msgf("func Nearby")
+	log.Info().Msgf("func Nearby")
 	log.Trace().Msg("in Search Nearby")
 
 	log.Trace().Msgf("nearby lat = %f", req.Lat)
