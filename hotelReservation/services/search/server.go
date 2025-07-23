@@ -158,9 +158,9 @@ func (s *Server) getGprcConn(name string, d *dagor.Dagor) (*grpc.ClientConn, err
 	} else if name == "srv-user" {
 		return grpc.Dial("192.168.1.6:8086", clientOptions...)
 	} else if name == "srv-geo" {
-		return grpc.Dial("192.168.1.3:8083", clientOptions...)
+		return grpc.Dial("192.168.1.7:8083", clientOptions...)
 	} else if name == "srv-rate" {
-		return grpc.Dial("192.168.1.6:8084", clientOptions...)
+		return grpc.Dial("192.168.1.8:8084", clientOptions...)
 	}
 
 	return grpc.Dial("192.168.1.6:8084", clientOptions...)

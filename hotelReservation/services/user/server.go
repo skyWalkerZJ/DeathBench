@@ -86,7 +86,7 @@ func (s *Server) Run() error {
 	if err != nil {
 		log.Fatal().Msgf("failed to listen: %v", err)
 	}
-
+	log.Info().Msgf("In reservation s.IpAddr = %s, port = %d", s.IpAddr, s.Port)
 	// err = s.Registry.Register(name, s.uuid, s.IpAddr, s.Port)
 	// if err != nil {
 	// 	return fmt.Errorf("failed register: %v", err)
